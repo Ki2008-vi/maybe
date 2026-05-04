@@ -107,6 +107,8 @@ app.get('/api/products', async (req, res) => {
       ...p,
       images: (() => { try { return JSON.parse(p.images || '[]'); } catch { return []; } })(),
       paymentMethods: (() => { try { return JSON.parse(p.payment_methods || '[]'); } catch { return []; } })(),
+      soldCount: p.sold_count,
+      rating: p.rating,
     }));
     res.json(products);
   } catch (error) {
@@ -149,11 +151,11 @@ app.post('/api/settings', async (req, res) => {
 
 // POST add product
 app.post('/api/products', async (req, res) => {
-  const { id, name, category, price, status, description, images, paymentMethods } = req.body;
+  const { id, name, category, price, status, description, images, paymentMethods, soldCount, rating } = req.body;
   try {
     await pool.execute(
-      'INSERT INTO products (id, name, category, price, status, description, images, payment_methods) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, name, category, price, status || 'In Stock', description || '', JSON.stringify(images || []), JSON.stringify(paymentMethods || [])]
+      'INSERT INTO products (id, name, category, price, status, description, images, payment_methods, sold_count, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, name, category, price, status || 'In Stock', description || '', JSON.stringify(images || []), JSON.stringify(paymentMethods || []), soldCount || 0, rating || 0]
     );
     res.json({ success: true });
   } catch (error) {
@@ -165,11 +167,11 @@ app.post('/api/products', async (req, res) => {
 // PUT update product
 app.put('/api/products/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, category, price, status, description, images, paymentMethods } = req.body;
+  const { name, category, price, status, description, images, paymentMethods, soldCount, rating } = req.body;
   try {
     await pool.execute(
-      'UPDATE products SET name = ?, category = ?, price = ?, status = ?, description = ?, images = ?, payment_methods = ? WHERE id = ?',
-      [name, category, price, status, description || '', JSON.stringify(images || []), JSON.stringify(paymentMethods || []), id]
+      'UPDATE products SET name = ?, category = ?, price = ?, status = ?, description = ?, images = ?, payment_methods = ?, sold_count = ?, rating = ? WHERE id = ?',
+      [name, category, price, status, description || '', JSON.stringify(images || []), JSON.stringify(paymentMethods || []), soldCount || 0, rating || 0, id]
     );
     res.json({ success: true });
   } catch (error) {

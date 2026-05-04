@@ -10,7 +10,9 @@ export const PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1594932224828-b4b059b6fe1c?q=80&w=1000&auto=format&fit=crop'
-    ]
+    ],
+    soldCount: 45,
+    rating: 4.8
   },
   {
     id: '2',
@@ -21,7 +23,9 @@ export const PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1000&auto=format&fit=crop'
-    ]
+    ],
+    soldCount: 12,
+    rating: 4.5
   },
   {
     id: '3',
@@ -32,7 +36,9 @@ export const PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=1000&auto=format&fit=crop'
-    ]
+    ],
+    soldCount: 28,
+    rating: 4.9
   },
   {
     id: '4',
@@ -43,7 +49,9 @@ export const PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=1000&auto=format&fit=crop'
-    ]
+    ],
+    soldCount: 156,
+    rating: 4.7
   },
   {
     id: '5',
@@ -54,7 +62,9 @@ export const PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1000&auto=format&fit=crop'
-    ]
+    ],
+    soldCount: 89,
+    rating: 5.0
   },
   {
     id: '6',
@@ -65,7 +75,9 @@ export const PRODUCTS: Product[] = [
     images: [
       'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?q=80&w=1000&auto=format&fit=crop'
-    ]
+    ],
+    soldCount: 210,
+    rating: 4.6
   }
 ];
 

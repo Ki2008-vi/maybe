@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { PRODUCTS } from '../constants';
 import { useCart } from '../context/CartContext';
-import { Minus, Plus, ArrowLeft } from 'lucide-react';
+import { Minus, Plus, ArrowLeft, Star } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -136,9 +136,20 @@ export const ProductDetail = () => {
         <div className="w-full md:w-1/2 flex flex-col pt-8">
           <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">{product.category}</p>
           <h1 className="font-display text-4xl lg:text-5xl font-bold uppercase tracking-[0.2em] mb-6">{product.name}</h1>
-          <p className="text-xl font-medium tracking-widest uppercase mb-8">
+          <p className="text-xl font-medium tracking-widest uppercase mb-4">
             Rp {product.price.toLocaleString('id-ID')}
           </p>
+
+          <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm font-bold">{product.rating || '0.0'}</span>
+            </div>
+            <div className="w-[1px] h-4 bg-gray-300" />
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-widest">
+              {product.soldCount || 0} Terjual
+            </span>
+          </div>
           <div className="prose prose-sm text-gray-600 mb-12">
             <p>{product.description || 'Premium quality garment crafted with attention to detail. Designed for comfort and durability while maintaining a sleek, modern aesthetic.'}</p>
           </div>

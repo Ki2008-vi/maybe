@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { Star } from 'lucide-react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 
@@ -56,9 +57,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       
       <div className="mt-4 flex flex-col items-center">
         <h3 className="font-display text-[12px] font-bold tracking-widest uppercase mb-1">{product.name}</h3>
-        <p className="text-[11px] font-medium text-gray-500 tracking-widest uppercase">
+        <p className="text-[11px] font-medium text-gray-500 tracking-widest uppercase mb-2">
           Rp {product.price.toLocaleString('id-ID')}
         </p>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span className="text-[10px] font-bold text-gray-700">{product.rating || '0.0'}</span>
+          </div>
+          <div className="w-[1px] h-3 bg-gray-300" />
+          <span className="text-[10px] font-medium text-gray-500 uppercase tracking-tighter">
+            {product.soldCount || 0} Terjual
+          </span>
+        </div>
       </div>
     </div>
   );

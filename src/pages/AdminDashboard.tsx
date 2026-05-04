@@ -29,6 +29,8 @@ interface Product {
   description: string;
   images: string[];
   paymentMethods?: string[];
+  soldCount?: number;
+  rating?: number;
 }
 
 const EMPTY_FORM = {
@@ -38,6 +40,8 @@ const EMPTY_FORM = {
   status: 'In Stock',
   description: '',
   paymentMethods: [] as string[],
+  soldCount: '0',
+  rating: '0',
 };
 
 const AVAILABLE_PAYMENT_METHODS = ['Bank Transfer', 'Credit Card', 'E-Wallet', 'COD'];
@@ -133,6 +137,8 @@ export const AdminDashboard = () => {
       status: product.status,
       description: product.description || '',
       paymentMethods: product.paymentMethods || [],
+      soldCount: String(product.soldCount || 0),
+      rating: String(product.rating || 0),
     });
     setImageFiles([]);
     setImagePreviews([]);
@@ -246,6 +252,8 @@ export const AdminDashboard = () => {
         description: form.description,
         images: allImages,
         paymentMethods: form.paymentMethods,
+        soldCount: Number(form.soldCount),
+        rating: Number(form.rating),
       };
       if (editingProduct) {
         const res = await fetch(`${API_URL}/api/products/${editingProduct.id}`, {
@@ -499,6 +507,8 @@ export const AdminDashboard = () => {
                     <th className="px-4 py-4">Product Info</th>
                     <th className="px-4 py-4">Category</th>
                     <th className="px-4 py-4">Price</th>
+                    <th className="px-4 py-4">Sold</th>
+                    <th className="px-4 py-4">Rating</th>
                     <th className="px-4 py-4">Status</th>
                     <th className="px-4 py-4 text-right">Actions</th>
                   </tr>
@@ -528,6 +538,8 @@ export const AdminDashboard = () => {
                       </td>
                       <td className="px-4 py-6 text-[10px] font-bold uppercase tracking-widest">{product.category}</td>
                       <td className="px-4 py-6 text-xs font-bold">Rp {Number(product.price || 0).toLocaleString('id-ID')}</td>
+                      <td className="px-4 py-6 text-[10px] font-bold uppercase">{product.soldCount || 0}</td>
+                      <td className="px-4 py-6 text-[10px] font-bold uppercase">{product.rating || 0}</td>
                       <td className="px-4 py-6">
                         <span className={`px-2 py-1 text-[9px] font-bold uppercase tracking-widest ${product.status === 'In Stock' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                           {product.status}
@@ -603,6 +615,20 @@ export const AdminDashboard = () => {
                     <option>In Stock</option>
                     <option>Sold Out</option>
                   </select>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Sold Count</label>
+                    <input type="number" value={form.soldCount} onChange={e => setForm(f => ({ ...f, soldCount: e.target.value }))}
+                      className="w-full border-b border-gray-200 py-2 focus:border-black outline-none text-xs font-bold tracking-widest"
+                      placeholder="0" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Rating (0-5)</label>
+                    <input type="number" step="0.1" max="5" value={form.rating} onChange={e => setForm(f => ({ ...f, rating: e.target.value }))}
+                      className="w-full border-b border-gray-200 py-2 focus:border-black outline-none text-xs font-bold tracking-widest"
+                      placeholder="0.0" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Payment Methods</label>

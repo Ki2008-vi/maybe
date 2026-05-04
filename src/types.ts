@@ -6,6 +6,8 @@ export interface Product {
   status: 'In Stock' | 'Sold Out';
   images: string[];
   description?: string;
+  soldCount?: number;
+  rating?: number;
 }
 
 export interface LookbookItem {
