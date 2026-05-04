@@ -1,50 +1,41 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-interface Settings {
-  storeTitle: string;
-  storeImage: string;
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 interface SettingsContextType {
-  settings: Settings;
-  loading: boolean;
+  storeTitle: string;
+  storeImage: string;
   refreshSettings: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType>({
-  settings: { storeTitle: 'SNSB World', storeImage: '' },
-  loading: true,
+  storeTitle: 'SNSB World',
+  storeImage: '',
   refreshSettings: async () => {},
 });
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useState<Settings>({ storeTitle: 'SNSB World', storeImage: '' });
-  const [loading, setLoading] = useState(true);
+  const [storeTitle, setStoreTitle] = useState('SNSB World');
+  const [storeImage, setStoreImage] = useState('');
 
-  const fetchSettings = async () => {
+  const refreshSettings = async () => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const res = await fetch(`${API_URL}/api/settings`);
+      if (!res.ok) return;
       const data = await res.json();
-      if (data.storeTitle) {
-        setSettings({
-          storeTitle: data.storeTitle,
-          storeImage: data.storeImage || ''
-        });
-      }
-    } catch (err) {
-      console.error('Failed to fetch settings:', err);
-    } finally {
-      setLoading(false);
+      if (data.storeTitle) setStoreTitle(data.storeTitle);
+      if (data.storeImage) setStoreImage(data.storeImage);
+    } catch {
+      // Settings endpoint not ready yet — use defaults silently
     }
   };
 
   useEffect(() => {
-    fetchSettings();
+    refreshSettings();
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, refreshSettings: fetchSettings }}>
+    <SettingsContext.Provider value={{ storeTitle, storeImage, refreshSettings }}>
       {children}
     </SettingsContext.Provider>
   );

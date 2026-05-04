@@ -164,11 +164,11 @@ export const Cart = () => {
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity" onClick={handleClose} />
 
-      <div className="fixed inset-y-0 right-0 w-full md:w-[480px] bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 w-[85%] sm:w-[400px] md:w-[480px] bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
 
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white z-10 shrink-0">
-          <h2 className="font-display text-lg font-bold tracking-widest uppercase flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5" />
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 bg-white z-10 shrink-0">
+          <h2 className="font-display text-sm md:text-lg font-bold tracking-widest uppercase flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4 md:w-5 md:h-5" />
             {orderPlaced ? 'Order Confirmed' : 'Checkout'}
           </h2>
           <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -230,7 +230,7 @@ export const Cart = () => {
                   <p className="font-display text-sm tracking-widest uppercase">Your cart is empty</p>
                 </div>
               ) : (
-                <div className="p-6 space-y-8">
+                <div className="p-4 md:p-6 space-y-6 md:space-y-8">
                   {/* Cart Items Section */}
                   <div className="space-y-5">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 pb-2">1. Order Items</h3>
@@ -318,7 +318,7 @@ export const Cart = () => {
 
             {/* ── FIXED BOTTOM FOOTER ── */}
             {cartItems.length > 0 && (
-              <div className="border-t border-gray-200 bg-gray-50 p-6 shrink-0">
+              <div className="border-t border-gray-200 bg-gray-50 p-4 md:p-6 shrink-0">
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between items-center text-sm font-bold tracking-widest uppercase border-t border-gray-200 pt-4 mt-2">
                     <span className="flex items-center gap-2"><Receipt className="w-4 h-4"/> Total</span>

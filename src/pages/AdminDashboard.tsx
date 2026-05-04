@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Package, Plus, Trash2, Edit2, X, Upload, CheckSquare, Square, ImageOff, Settings } from 'lucide-react';
+import { Package, Plus, Trash2, Edit2, X, Upload, CheckSquare, Square, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSettings } from '../context/SettingsContext';
 
@@ -10,9 +10,6 @@ interface Order {
   userId: string;
   customerEmail: string;
   total: number;
-  taxAmount?: number;
-  shippingFee?: number;
-  subTotal?: number;
   paymentMethod: string;
   recipientName?: string;
   phone?: string;
@@ -31,7 +28,7 @@ interface Product {
   status: string;
   description: string;
   images: string[];
-  paymentMethods?: string[]; // Ditambahkan untuk metode pembayaran
+  paymentMethods?: string[];
 }
 
 const EMPTY_FORM = {
@@ -40,47 +37,53 @@ const EMPTY_FORM = {
   price: '',
   status: 'In Stock',
   description: '',
-  paymentMethods: [] as string[], // Default state untuk metode pembayaran
+  paymentMethods: [] as string[],
 };
 
 const AVAILABLE_PAYMENT_METHODS = ['Bank Transfer', 'Credit Card', 'E-Wallet', 'COD'];
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const AdminDashboard = () => {
   const { isAdmin, loading: authLoading } = useAuth();
-  // Tab 'settings' ditambahkan ke dalam state
+  const { storeTitle, storeImage: savedStoreImage, refreshSettings } = useSettings();
+
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'settings'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal State
+  // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Image upload state
+  // Image upload
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Bulk delete state
+  // Bulk delete
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  const { refreshSettings } = useSettings();
-
-  // Store Settings State
-  const [storeTitle, setStoreTitle] = useState('My Store');
-  const [storeImagePreview, setStoreImagePreview] = useState<string>('');
+  // Store settings
+  const [storeTitleInput, setStoreTitleInput] = useState('');
+  const [storeImagePreview, setStoreImagePreview] = useState('');
   const [storeImageFile, setStoreImageFile] = useState<File | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
   const storeImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync settings inputs when tab opens
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      setStoreTitleInput(storeTitle);
+      setStoreImagePreview(savedStoreImage);
+    }
+  }, [activeTab, storeTitle, savedStoreImage]);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchOrders = async () => {
@@ -99,22 +102,12 @@ export const AdminDashboard = () => {
     } catch { setProducts([]); }
   };
 
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/settings`);
-      const data = await res.json();
-      if (data.storeTitle) setStoreTitle(data.storeTitle);
-      if (data.storeImage) setStoreImagePreview(data.storeImage);
-    } catch { /* Ignore if settings endpoint doesn't exist yet */ }
-  };
-
   useEffect(() => {
     const load = async () => {
       if (!isAdmin) return;
       setLoading(true);
       if (activeTab === 'orders') await fetchOrders();
       else if (activeTab === 'products') await fetchProducts();
-      else if (activeTab === 'settings') await fetchSettings();
       setLoading(false);
     };
     if (!authLoading && isAdmin) load();
@@ -158,26 +151,20 @@ export const AdminDashboard = () => {
     setErrorMsg('');
   };
 
-  // ── Handlers untuk Metode Pembayaran ────────────────────────────────────────
   const togglePaymentMethod = (method: string) => {
-    setForm(prev => {
-      const isSelected = prev.paymentMethods.includes(method);
-      if (isSelected) {
-        return { ...prev, paymentMethods: prev.paymentMethods.filter(m => m !== method) };
-      } else {
-        return { ...prev, paymentMethods: [...prev.paymentMethods, method] };
-      }
-    });
+    setForm(prev => ({
+      ...prev,
+      paymentMethods: prev.paymentMethods.includes(method)
+        ? prev.paymentMethods.filter(m => m !== method)
+        : [...prev.paymentMethods, method],
+    }));
   };
 
-  // ── Handlers untuk Store Settings ───────────────────────────────────────────
+  // ── Store settings ─────────────────────────────────────────────────────────
   const handleStoreImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File is larger than 5MB.');
-      return;
-    }
+    if (file.size > 5 * 1024 * 1024) { alert('File must be under 5MB.'); return; }
     setStoreImageFile(file);
     const reader = new FileReader();
     reader.onload = ev => setStoreImagePreview(ev.target?.result as string);
@@ -188,45 +175,33 @@ export const AdminDashboard = () => {
     setSavingSettings(true);
     try {
       let finalImageUrl = storeImagePreview;
-
-      // Upload store image if changed
       if (storeImageFile) {
         const formData = new FormData();
         formData.append('images', storeImageFile);
         const uploadRes = await fetch(`${API_URL}/api/upload`, { method: 'POST', body: formData });
         const uploadData = await uploadRes.json();
-        if (uploadRes.ok && uploadData.urls?.length > 0) {
-          finalImageUrl = uploadData.urls[0];
-        }
+        if (uploadRes.ok && uploadData.urls?.length > 0) finalImageUrl = uploadData.urls[0];
       }
-
-      // Save settings
       await fetch(`${API_URL}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeTitle, storeImage: finalImageUrl }),
+        body: JSON.stringify({ storeTitle: storeTitleInput, storeImage: finalImageUrl }),
       });
-      
       await refreshSettings();
-      alert('Store settings saved successfully!');
-    } catch (err) {
-      alert('Failed to save settings. Check your server.');
+      alert('Settings saved!');
+    } catch {
+      alert('Failed to save settings.');
     } finally {
       setSavingSettings(false);
     }
   };
 
-  // ── Image file selection ───────────────────────────────────────────────────
+  // ── Image upload ───────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-
-    const oversizedFiles = files.filter(f => f.size > 5 * 1024 * 1024);
-    if (oversizedFiles.length > 0) {
-      setErrorMsg('Some files are larger than 5MB and were skipped.');
-      return;
-    }
-
+    const oversized = files.filter(f => f.size > 5 * 1024 * 1024);
+    if (oversized.length > 0) { setErrorMsg('Some files exceed 5MB and were skipped.'); return; }
     setImageFiles(prev => [...prev, ...files]);
     files.forEach(file => {
       const reader = new FileReader();
@@ -248,14 +223,10 @@ export const AdminDashboard = () => {
   const handleSave = async () => {
     if (!form.name.trim()) { setErrorMsg('Product name is required.'); return; }
     if (!form.price || isNaN(Number(form.price))) { setErrorMsg('Enter a valid price.'); return; }
-
     setSaving(true);
     setErrorMsg('');
-
     try {
       let uploadedUrls: string[] = [];
-
-      // Upload new image files if any
       if (imageFiles.length > 0) {
         setUploading(true);
         const formData = new FormData();
@@ -266,7 +237,6 @@ export const AdminDashboard = () => {
         uploadedUrls = uploadData.urls || [];
         setUploading(false);
       }
-
       const allImages = [...existingImages, ...uploadedUrls];
       const payload = {
         name: form.name,
@@ -275,9 +245,8 @@ export const AdminDashboard = () => {
         status: form.status,
         description: form.description,
         images: allImages,
-        paymentMethods: form.paymentMethods, // Mengirimkan metode pembayaran
+        paymentMethods: form.paymentMethods,
       };
-
       if (editingProduct) {
         const res = await fetch(`${API_URL}/api/products/${editingProduct.id}`, {
           method: 'PUT',
@@ -293,18 +262,17 @@ export const AdminDashboard = () => {
         });
         if (!res.ok) throw new Error('Failed to add product');
       }
-
       await fetchProducts();
       closeModal();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Something went wrong. Check your server.');
+      setErrorMsg(err.message || 'Something went wrong.');
       setUploading(false);
     } finally {
       setSaving(false);
     }
   };
 
-  // ── Single delete ──────────────────────────────────────────────────────────
+  // ── Delete ─────────────────────────────────────────────────────────────────
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm('Delete this product?')) return;
     await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE' });
@@ -312,7 +280,6 @@ export const AdminDashboard = () => {
     setSelectedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
   };
 
-  // ── Bulk delete ────────────────────────────────────────────────────────────
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const s = new Set(prev);
@@ -328,7 +295,7 @@ export const AdminDashboard = () => {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} selected product(s)?`)) return;
+    if (!window.confirm(`Delete ${selectedIds.size} product(s)?`)) return;
     setBulkDeleting(true);
     try {
       const res = await fetch(`${API_URL}/api/products/bulk-delete`, {
@@ -339,11 +306,8 @@ export const AdminDashboard = () => {
       if (!res.ok) throw new Error('Bulk delete failed');
       setSelectedIds(new Set());
       await fetchProducts();
-    } catch (err) {
-      alert('Bulk delete failed. Check your server.');
-    } finally {
-      setBulkDeleting(false);
-    }
+    } catch { alert('Bulk delete failed.'); }
+    finally { setBulkDeleting(false); }
   };
 
   // ── Guards ─────────────────────────────────────────────────────────────────
@@ -354,7 +318,6 @@ export const AdminDashboard = () => {
   );
   if (!isAdmin) return <Navigate to="/" />;
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="pt-32 pb-24 max-w-[1400px] mx-auto px-6 w-full">
       {/* Header */}
@@ -373,19 +336,17 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Stats - Disembunyikan di tab Settings untuk kerapian */}
+      {/* Stats */}
       {activeTab !== 'settings' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {[
             { label: 'Total Orders', value: orders.length },
             { label: 'Inventory Items', value: products.length },
-            { label: 'Total Revenue', value: orders.reduce((a, c) => a + (Number(c.total) || 0), 0) },
+            { label: 'Total Revenue', value: `Rp ${orders.reduce((a, c) => a + (Number(c.total) || 0), 0).toLocaleString('id-ID')}` },
           ].map(({ label, value }) => (
-            <div key={label} className="bg-white p-6 border border-gray-100 shadow-sm flex flex-col group hover:border-black transition-colors">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.4em] mb-2">{label}</span>
-              <span className="text-2xl font-display font-bold">
-                {typeof value === 'number' && label === 'Total Revenue' ? `Rp ${value.toLocaleString('id-ID')}` : value}
-              </span>
+            <div key={label} className="bg-white p-6 border border-gray-100 shadow-sm flex flex-col">
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">{label}</span>
+              <span className="text-2xl font-display font-bold">{value}</span>
             </div>
           ))}
         </div>
@@ -393,9 +354,49 @@ export const AdminDashboard = () => {
 
       {/* Main Content */}
       <div className="min-h-[400px]">
-        {loading ? (
+        {loading && activeTab !== 'settings' ? (
           <div className="py-20 text-center text-gray-400 uppercase tracking-widest text-xs">Loading data...</div>
+        ) : activeTab === 'settings' ? (
+          /* SETTINGS TAB */
+          <div className="max-w-2xl bg-white border border-gray-100 shadow-sm p-8">
+            <div className="flex items-center gap-3 mb-8">
+              <Settings className="w-6 h-6" />
+              <h2 className="font-display text-xl font-bold uppercase tracking-widest">Store Configuration</h2>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Store Title</label>
+                <input type="text" value={storeTitleInput} onChange={e => setStoreTitleInput(e.target.value)}
+                  className="w-full border-b border-gray-200 py-2 focus:border-black outline-none text-sm font-bold uppercase tracking-widest"
+                  placeholder="Enter store title" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Store Banner / Logo</label>
+                {storeImagePreview && (
+                  <div className="mb-4 relative w-48 h-32">
+                    <img src={storeImagePreview} alt="Store" className="w-full h-full object-cover border border-gray-200" />
+                    <button onClick={() => { setStoreImagePreview(''); setStoreImageFile(null); }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                <input ref={storeImageInputRef} type="file" accept="image/*" onChange={handleStoreImageChange} className="hidden" />
+                <button onClick={() => storeImageInputRef.current?.click()}
+                  className="w-full border-2 border-dashed border-gray-200 py-6 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:border-black hover:text-black transition-colors flex flex-col items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  {storeImagePreview ? 'Change Image' : 'Upload Store Image'}
+                </button>
+              </div>
+              <button onClick={saveStoreSettings} disabled={savingSettings}
+                className="bg-black text-white px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50">
+                {savingSettings ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </div>
+
         ) : activeTab === 'orders' ? (
+          /* ORDERS TAB */
           orders.length === 0 ? (
             <div className="py-32 bg-gray-50 border border-dashed border-gray-200 flex flex-col items-center justify-center">
               <Package className="w-12 h-12 text-gray-200 mb-4" />
@@ -421,22 +422,17 @@ export const AdminDashboard = () => {
                           <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400 mb-3">Shipping To</h4>
                           <p className="text-xs font-bold uppercase tracking-widest">{order.recipientName || 'No Name'}</p>
                           <p className="text-[10px] text-gray-500 tracking-widest uppercase mt-1">
-                            {order.streetAddress}, {order.city}, {order.postalCode}
+                            {[order.streetAddress, order.city, order.postalCode].filter(Boolean).join(', ')}
                           </p>
-                          <p className="text-[10px] text-gray-500 tracking-widest uppercase mt-1">{order.phone}</p>
+                          {order.phone && <p className="text-[10px] text-gray-500 tracking-widest uppercase mt-1">{order.phone}</p>}
                         </div>
                         <div>
-                          <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400 mb-3">Financials</h4>
-                          <div className="space-y-1">
-                            <div className="flex justify-between items-center pt-2 mt-2 border-t border-gray-100">
-                              <span className="text-xs font-bold uppercase tracking-widest">Total Paid</span>
-                              <span className="text-lg font-display font-bold">Rp {(order.total || 0).toLocaleString('id-ID')}</span>
-                            </div>
-                          </div>
+                          <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400 mb-3">Payment</h4>
+                          <span className="text-xl font-display font-bold block">Rp {Number(order.total || 0).toLocaleString('id-ID')}</span>
                           {order.paymentMethod && (
-                            <div className="mt-3 flex items-center gap-2">
-                               <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                               <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">{order.paymentMethod}</span>
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">{order.paymentMethod}</span>
                             </div>
                           )}
                         </div>
@@ -461,51 +457,9 @@ export const AdminDashboard = () => {
               ))}
             </div>
           )
-        ) : activeTab === 'settings' ? (
-          /* SETTINGS TAB */
-          <div className="max-w-2xl bg-white border border-gray-100 shadow-sm p-8">
-             <div className="flex items-center gap-3 mb-8">
-                <Settings className="w-6 h-6" />
-                <h2 className="font-display text-xl font-bold uppercase tracking-widest">Store Configuration</h2>
-             </div>
-             
-             <div className="space-y-6">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Store Title</label>
-                  <input type="text" value={storeTitle} onChange={e => setStoreTitle(e.target.value)}
-                    className="w-full border-b border-gray-200 py-2 focus:border-black outline-none text-sm font-bold uppercase tracking-widest"
-                    placeholder="Enter store title" />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Store Banner/Logo</label>
-                  {storeImagePreview && (
-                    <div className="mb-4 relative w-48 h-32">
-                       <img src={storeImagePreview} alt="Store" className="w-full h-full object-cover border border-gray-200" />
-                       <button onClick={() => { setStoreImagePreview(''); setStoreImageFile(null); }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center">
-                          <X className="w-3 h-3" />
-                       </button>
-                    </div>
-                  )}
-                  <input ref={storeImageInputRef} type="file" accept="image/*" onChange={handleStoreImageChange} className="hidden" />
-                  <button onClick={() => storeImageInputRef.current?.click()}
-                    className="w-full border-2 border-dashed border-gray-200 py-6 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:border-black hover:text-black transition-colors flex flex-col items-center gap-2">
-                    <Upload className="w-5 h-5" />
-                    {storeImagePreview ? 'Change Store Image' : 'Upload Store Image'}
-                  </button>
-                </div>
-
-                <button onClick={saveStoreSettings} disabled={savingSettings}
-                  className="mt-6 bg-black text-white px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:opacity-80 transition-opacity disabled:opacity-50">
-                  {savingSettings ? 'Saving...' : 'Save Settings'}
-                </button>
-             </div>
-          </div>
         ) : (
           /* PRODUCTS TAB */
           <div className="space-y-4">
-            {/* Toolbar */}
             <div className="flex flex-wrap justify-between items-center gap-4">
               <div className="flex items-center gap-3">
                 <h2 className="font-display text-xl font-bold uppercase tracking-widest">Product Inventory</h2>
@@ -530,7 +484,6 @@ export const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Table */}
             <div className="bg-white border border-gray-100 overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-gray-50 border-b border-gray-100">
@@ -561,10 +514,11 @@ export const AdminDashboard = () => {
                       <td className="px-4 py-4">
                         {product.images && product.images.length > 0 ? (
                           <img src={product.images[0]} alt={product.name}
-                            className="w-12 h-12 object-cover border border-gray-100" />
+                            className="w-12 h-12 object-cover border border-gray-100"
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         ) : (
-                          <div className="w-12 h-12 bg-gray-100 flex items-center justify-center">
-                            <ImageOff className="w-4 h-4 text-gray-300" />
+                          <div className="w-12 h-12 bg-gray-100 flex items-center justify-center text-[9px] text-gray-300 font-bold uppercase">
+                            No img
                           </div>
                         )}
                       </td>
@@ -603,7 +557,7 @@ export const AdminDashboard = () => {
         )}
       </div>
 
-      {/* Add / Edit Modal */}
+      {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <>
@@ -612,7 +566,6 @@ export const AdminDashboard = () => {
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white z-[70] p-10 max-h-[90vh] overflow-y-auto">
-
               <div className="flex justify-between items-start mb-8">
                 <h2 className="font-display text-2xl font-bold uppercase tracking-widest">
                   {editingProduct ? 'Edit Product' : 'Add Product'}
@@ -621,23 +574,17 @@ export const AdminDashboard = () => {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-
               <div className="space-y-6">
-                {/* Name */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Product Name *</label>
-                  <input type="text" value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     className="w-full border-b border-gray-200 py-2 focus:border-black outline-none text-xs font-bold uppercase tracking-widest"
                     placeholder="e.g. Classic Oversized Tee" />
                 </div>
-
-                {/* Price + Category */}
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Price (Rp) *</label>
-                    <input type="number" value={form.price}
-                      onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+                    <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
                       className="w-full border-b border-gray-200 py-2 focus:border-black outline-none text-xs font-bold tracking-widest"
                       placeholder="250000" />
                   </div>
@@ -649,8 +596,6 @@ export const AdminDashboard = () => {
                     </select>
                   </div>
                 </div>
-
-                {/* Status */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Status</label>
                   <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
@@ -659,38 +604,27 @@ export const AdminDashboard = () => {
                     <option>Sold Out</option>
                   </select>
                 </div>
-                
-                {/* Payment Methods */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Payment Methods</label>
                   <div className="flex flex-wrap gap-3">
                     {AVAILABLE_PAYMENT_METHODS.map(method => (
                       <label key={method} className="flex items-center gap-2 cursor-pointer text-xs uppercase tracking-widest">
-                        <input
-                          type="checkbox"
-                          checked={form.paymentMethods.includes(method)}
+                        <input type="checkbox" checked={form.paymentMethods.includes(method)}
                           onChange={() => togglePaymentMethod(method)}
-                          className="w-3 h-3 text-black border-gray-300 focus:ring-black"
-                        />
+                          className="w-3 h-3 border-gray-300" />
                         {method}
                       </label>
                     ))}
                   </div>
                 </div>
-
-                {/* Description */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Description</label>
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                     rows={3} placeholder="Optional product description..."
                     className="w-full border-b border-gray-200 py-2 focus:border-black outline-none text-xs tracking-widest resize-none" />
                 </div>
-
-                {/* Image Upload */}
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Product Images</label>
-
-                  {/* Existing images (edit mode) */}
                   {existingImages.length > 0 && (
                     <div className="mb-3">
                       <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-2">Current Images</p>
@@ -707,8 +641,6 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
                   )}
-
-                  {/* New image previews */}
                   {imagePreviews.length > 0 && (
                     <div className="mb-3">
                       <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-2">New Images</p>
@@ -725,8 +657,6 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
                   )}
-
-                  {/* Upload button */}
                   <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
                   <button onClick={() => fileInputRef.current?.click()}
                     className="w-full border-2 border-dashed border-gray-200 py-6 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:border-black hover:text-black transition-colors flex flex-col items-center gap-2">
@@ -734,11 +664,7 @@ export const AdminDashboard = () => {
                     Click to upload images (max 5MB each)
                   </button>
                 </div>
-
-                {/* Error */}
                 {errorMsg && <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">{errorMsg}</p>}
-
-                {/* Save */}
                 <button onClick={handleSave} disabled={saving}
                   className="w-full bg-black text-white py-4 text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50">
                   {uploading ? 'Uploading Images...' : saving ? 'Saving...' : editingProduct ? 'Update Product' : 'Save to Database'}

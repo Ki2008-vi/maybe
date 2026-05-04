@@ -18,7 +18,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+      <div className="relative aspect-square md:aspect-[4/5] overflow-hidden bg-gray-100">
         <Link to={`/product/${product.id}`} className="block w-full h-full">
           <img 
             src={isHovered && product.images && product.images[1] ? product.images[1] : (product.images && product.images[0] ? product.images[0] : 'https://images.unsplash.com/photo-1594932224828-b4b059b6fe1c?q=80&w=1000&auto=format&fit=crop')} 

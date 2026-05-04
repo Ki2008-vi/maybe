@@ -8,7 +8,7 @@ import { useSettings } from '../context/SettingsContext';
 
 export const Home = () => {
   const featuredProducts = PRODUCTS.slice(0, 4);
-  const { settings } = useSettings();
+  const { storeTitle, storeImage } = useSettings();
 
   return (
     <div className="flex flex-col">
@@ -16,8 +16,8 @@ export const Home = () => {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src={settings.storeImage || "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2000&auto=format&fit=crop"} 
-            alt={settings.storeTitle} 
+            src={storeImage || "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2000&auto=format&fit=crop"} 
+            alt={storeTitle} 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/40" />

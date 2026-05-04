@@ -18,7 +18,7 @@ export const Navbar = () => {
   const location = useLocation();
   const { setIsCartOpen, totalItems } = useCart();
   const { user, isAdmin } = useAuth();
-  const { settings } = useSettings();
+  const { storeTitle, storeImage } = useSettings();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -34,7 +34,7 @@ export const Navbar = () => {
   }, [location, setIsCartOpen]);
 
   // Split store title into two parts for the aesthetic
-  const titleParts = settings.storeTitle.split(' ');
+  const titleParts = storeTitle.split(' ');
   const mainTitle = titleParts[0] || 'SNSB';
   const subTitle = titleParts.slice(1).join(' ') || 'WORLD';
 
@@ -79,8 +79,8 @@ export const Navbar = () => {
 
           {/* Logo */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-            {settings.storeImage ? (
-              <img src={settings.storeImage} alt={settings.storeTitle} className="h-8 md:h-12 w-auto object-contain" />
+            {storeImage ? (
+              <img src={storeImage} alt={storeTitle} className="h-8 md:h-12 w-auto object-contain" />
             ) : (
               <>
                 <span className="font-display text-2xl font-bold tracking-[0.2em] uppercase">{mainTitle}</span>
@@ -177,7 +177,7 @@ export const Navbar = () => {
           >
             <div className="flex justify-between items-center mb-12">
               <Link to="/" onClick={() => setIsMenuOpen(false)}>
-                <span className="font-display text-xl font-bold tracking-[0.2em] uppercase">{settings.storeTitle}</span>
+                <span className="font-display text-xl font-bold tracking-[0.2em] uppercase">{storeTitle}</span>
               </Link>
               <button onClick={() => setIsMenuOpen(false)}>
                 <X className="w-6 h-6" />
