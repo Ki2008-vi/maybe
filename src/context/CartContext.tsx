@@ -3,15 +3,17 @@ import { Product } from '../types';
 
 export interface CartItem extends Product {
   quantity: number;
+  size?: string;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, quantity?: number, size?: string) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  updateSize: (productId: string, size: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -23,17 +25,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
+  const addToCart = (product: Product, quantity: number = 1, size?: string) => {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find(item => item.id === product.id);
       if (existingItem) {
         return prevItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + quantity, ...(size ? { size } : {}) }
             : item
         );
       }
-      return [...prevItems, { ...product, quantity }];
+      return [...prevItems, { ...product, quantity, size }];
     });
     setIsCartOpen(true);
   };
@@ -54,6 +56,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateSize = (productId: string, size: string) => {
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.id === productId ? { ...item, size } : item
+      )
+    );
+  };
+
   const clearCart = () => setCartItems([]);
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -68,6 +78,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addToCart,
         removeFromCart,
         updateQuantity,
+        updateSize,
         clearCart,
         totalItems,
         totalPrice,

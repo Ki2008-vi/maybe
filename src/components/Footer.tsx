@@ -43,15 +43,15 @@ export const Footer = () => {
               <input 
                 type="email" 
                 placeholder="EMAIL ADDRESS" 
-                className="bg-transparent border-b border-gray-700 py-2 flex-1 text-[10px] tracking-widest uppercase focus:outline-none focus:border-white transition-colors"
+                className="bg-transparent border-b border-gray-700 py-2 flex-1 text-[10px] tracking-widest uppercase focus:outline-none focus:border-white transition-colors min-w-0"
               />
-              <button className="text-[10px] font-bold uppercase tracking-[0.3em] hover:opacity-50">Join</button>
+              <button className="text-[10px] font-bold uppercase tracking-[0.3em] hover:opacity-50 shrink-0">Join</button>
             </div>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between pt-10 border-t border-white/10 text-[10px] tracking-[0.2em] font-medium text-gray-600 uppercase">
-          <p>© {new Date().getFullYear()} SNSB WORLD. ALL RIGHTS RESERVED.</p>
+          <p className="text-center md:text-left">© {new Date().getFullYear()} SNSB WORLD. ALL RIGHTS RESERVED.</p>
           <div className="flex items-center gap-6 mt-6 md:mt-0">
             <Instagram className="w-4 h-4 hover:text-white transition-colors cursor-pointer" />
             <Facebook className="w-4 h-4 hover:text-white transition-colors cursor-pointer" />

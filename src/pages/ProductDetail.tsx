@@ -9,15 +9,53 @@ export const ProductDetail = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   
-  const product = PRODUCTS.find(p => p.id === id);
-  
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  // Scroll to top when product changes
   useEffect(() => {
+    const getProduct = async () => {
+      setLoading(true);
+      // Try local constants first
+      const localProduct = PRODUCTS.find(p => p.id === id);
+      if (localProduct) {
+        setProduct(localProduct);
+        setLoading(false);
+        return;
+      }
+
+      // If not found, try API
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${API_URL}/api/products`);
+        const data = await response.json();
+        const found = data.find((p: any) => String(p.id) === id);
+        if (found) {
+          setProduct({
+            ...found,
+            price: Number(found.price),
+            images: found.images || []
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching product:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getProduct();
     window.scrollTo(0, 0);
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="pt-40 pb-24 text-center px-6 min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -53,13 +91,13 @@ export const ProductDetail = () => {
         <div className="w-full md:w-1/2 flex flex-col gap-4">
           <div className="aspect-[4/5] bg-gray-100 overflow-hidden">
             <img 
-              src={product.images[activeImageIndex]} 
+              src={product.images && product.images[activeImageIndex] ? product.images[activeImageIndex] : 'https://images.unsplash.com/photo-1594932224828-b4b059b6fe1c?q=80&w=1000&auto=format&fit=crop'} 
               alt={product.name} 
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {product.images.map((img, idx) => (
+          <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+            {product.images && product.images.length > 0 && product.images.map((img, idx) => (
               <button 
                 key={idx}
                 onClick={() => setActiveImageIndex(idx)}

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { PRODUCTS } from '../constants';
 import { ProductCard } from '../components/ProductCard';
 import { SlidersHorizontal, ChevronDown } from 'lucide-react';
@@ -14,8 +14,26 @@ export const Shop = () => {
 
   const categories = ['All Product', 'T-Shirt', 'Pants', 'Outwear', 'Accessories', 'Long Sleeve'];
 
+  const [products, setProducts] = useState(PRODUCTS);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${API_URL}/api/products`);
+        const data = await response.json();
+        if (data && Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        }
+      } catch (err) {
+        console.error('Error fetching products from MySQL:', err);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   const filteredProducts = useMemo(() => {
-    let result = [...PRODUCTS];
+    let result = [...products];
     
     if (catParam && catParam !== 'All Product') {
       result = result.filter(p => p.category === catParam);
@@ -27,7 +45,7 @@ export const Shop = () => {
     if (sortBy === 'Price: High to Low') result.sort((a, b) => b.price - a.price);
 
     return result;
-  }, [catParam, priceRange, sortBy]);
+  }, [catParam, priceRange, sortBy, products]);
 
   return (
     <div className="pt-32 pb-24 max-w-[1400px] mx-auto px-6 w-full">
@@ -46,7 +64,7 @@ export const Shop = () => {
             <button className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest border-b border-black md:border-none pb-2 md:pb-0">
               Sort: {sortBy} <ChevronDown className="w-3 h-3" />
             </button>
-            <div className="absolute top-full right-0 pt-4 hidden group-hover:block z-20">
+            <div className="absolute top-full left-0 md:left-auto md:right-0 pt-4 hidden group-hover:block z-20">
               <div className="bg-white border border-gray-100 shadow-xl p-4 min-w-[200px] text-xs font-bold uppercase tracking-widest space-y-3 cursor-pointer">
                 {['Best Selling', 'Price: Low to High', 'Price: High to Low', 'A-Z', 'Date: New to Old'].map(opt => (
                   <div key={opt} onClick={() => setSortBy(opt)} className="hover:opacity-50">{opt}</div>
@@ -132,5 +150,3 @@ export const Shop = () => {
     </div>
   );
 };
-
-import { Link } from 'react-router-dom';

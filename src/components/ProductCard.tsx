@@ -18,20 +18,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`/product/${product.id}`} className="block relative aspect-[4/5] overflow-hidden bg-gray-100">
-        <img 
-          src={isHovered && product.images[1] ? product.images[1] : product.images[0]} 
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
+      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+        <Link to={`/product/${product.id}`} className="block w-full h-full">
+          <img 
+            src={isHovered && product.images && product.images[1] ? product.images[1] : (product.images && product.images[0] ? product.images[0] : 'https://images.unsplash.com/photo-1594932224828-b4b059b6fe1c?q=80&w=1000&auto=format&fit=crop')} 
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        </Link>
         
         {product.status === 'Sold Out' && (
-          <div className="absolute top-4 left-4 bg-white text-black px-3 py-1 text-[10px] font-bold uppercase tracking-widest shadow-sm">
+          <div className="absolute top-4 left-4 bg-white text-black px-3 py-1 text-[10px] font-bold uppercase tracking-widest shadow-sm pointer-events-none">
             Sold Out
           </div>
         )}
 
-        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300 z-10">
+        <div className="absolute bottom-4 right-4 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity translate-y-0 lg:translate-y-2 group-hover:translate-y-0 duration-300 z-10">
           <button 
             onClick={(e) => {
               e.preventDefault();
@@ -41,7 +43,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               }
             }}
             disabled={product.status === 'Sold Out'}
-            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest ${
+            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest shadow-lg ${
               product.status === 'In Stock' 
                 ? 'bg-black text-white hover:bg-gray-900' 
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -50,7 +52,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.status === 'In Stock' ? 'Add to Cart' : 'Out of Stock'}
           </button>
         </div>
-      </Link>
+      </div>
       
       <div className="mt-4 flex flex-col items-center">
         <h3 className="font-display text-[12px] font-bold tracking-widest uppercase mb-1">{product.name}</h3>

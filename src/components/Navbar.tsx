@@ -4,13 +4,21 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useLocation } from 'react-router-dom';
 import { PRODUCTS } from '../constants';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { signInWithGoogle, auth } from '../lib/firebase';
+import { signOut } from 'firebase/auth';
+
+import { useSettings } from '../context/SettingsContext';
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { setIsCartOpen, totalItems } = useCart();
+  const { user, isAdmin } = useAuth();
+  const { settings } = useSettings();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -22,7 +30,13 @@ export const Navbar = () => {
   useEffect(() => {
     setIsMenuOpen(false);
     setIsCartOpen(false);
+    setIsUserMenuOpen(false);
   }, [location, setIsCartOpen]);
+
+  // Split store title into two parts for the aesthetic
+  const titleParts = settings.storeTitle.split(' ');
+  const mainTitle = titleParts[0] || 'SNSB';
+  const subTitle = titleParts.slice(1).join(' ') || 'WORLD';
 
   return (
     <>
@@ -65,18 +79,76 @@ export const Navbar = () => {
 
           {/* Logo */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-            <span className="font-display text-2xl font-bold tracking-[0.2em] uppercase">SNSB</span>
-            <span className="text-[10px] tracking-[0.4em] uppercase -mt-1 opacity-60">World</span>
+            {settings.storeImage ? (
+              <img src={settings.storeImage} alt={settings.storeTitle} className="h-8 md:h-12 w-auto object-contain" />
+            ) : (
+              <>
+                <span className="font-display text-2xl font-bold tracking-[0.2em] uppercase">{mainTitle}</span>
+                <span className="text-[10px] tracking-[0.4em] uppercase -mt-1 opacity-60">{subTitle}</span>
+              </>
+            )}
           </Link>
 
           {/* Right Navigation */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 md:gap-6">
             <button onClick={() => setIsSearchOpen(true)} className="hover:opacity-50 transition-opacity">
               <Search className="w-5 h-5" />
             </button>
-            <button className="hidden sm:block hover:opacity-50 transition-opacity">
-              <User className="w-5 h-5" />
-            </button>
+            <div className="hidden sm:block relative">
+              <button 
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="hover:opacity-50 transition-opacity flex items-center gap-2"
+              >
+                {user ? (
+                  <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-5 h-5 rounded-full" />
+                ) : (
+                  <User className="w-5 h-5" />
+                )}
+              </button>
+              
+              {isUserMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+                  <div className="absolute top-full right-0 pt-4 z-50">
+                    <div className="bg-white border border-gray-100 shadow-xl p-4 min-w-[200px]">
+                      {user ? (
+                        <div className="space-y-3">
+                          <div className="pb-3 border-b border-gray-100">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Signed in as</p>
+                            <p className="text-xs font-bold truncate">{user.displayName}</p>
+                            <p className="text-[9px] text-gray-500 truncate">{user.email}</p>
+                          </div>
+                          {isAdmin ? (
+                            <Link to="/admin" className="block text-xs font-bold uppercase tracking-widest hover:pl-2 transition-all text-red-500">Admin Panel</Link>
+                          ) : (
+                            <p className="text-[9px] text-red-400 italic">No Admin Access</p>
+                          )}
+                          <button 
+                            onClick={() => {
+                              signOut(auth);
+                              setIsUserMenuOpen(false);
+                            }}
+                            className="block w-full text-left text-xs font-bold uppercase tracking-widest hover:pl-2 transition-all"
+                          >
+                            Sign Out
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            signInWithGoogle();
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="block w-full text-left text-xs font-bold uppercase tracking-widest hover:pl-2 transition-all"
+                        >
+                          Login / Sign Up
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <button 
               onClick={() => setIsCartOpen(true)}
               className="relative hover:opacity-50 transition-opacity"
@@ -105,18 +177,53 @@ export const Navbar = () => {
           >
             <div className="flex justify-between items-center mb-12">
               <Link to="/" onClick={() => setIsMenuOpen(false)}>
-                <span className="font-display text-xl font-bold tracking-[0.2em] uppercase">SNSB WORLD</span>
+                <span className="font-display text-xl font-bold tracking-[0.2em] uppercase">{settings.storeTitle}</span>
               </Link>
               <button onClick={() => setIsMenuOpen(false)}>
                 <X className="w-6 h-6" />
               </button>
             </div>
             
-            <div className="flex-1 space-y-8 font-display text-2xl font-bold uppercase tracking-widest">
-              <Link to="/" className="block">Home</Link>
-              <Link to="/shop" className="block">Shop All</Link>
-              <Link to="/lookbook" className="block">Lookbooks</Link>
-              <Link to="/account" className="block text-gray-300">Account</Link>
+            <div className="flex-1 space-y-8 font-display text-2xl font-bold uppercase tracking-widest overflow-y-auto">
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="block">Home</Link>
+              <div className="space-y-4">
+                <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="block">Shop</Link>
+                <div className="pl-4 space-y-3 text-lg text-gray-500">
+                  <Link to="/shop?cat=New Arrival" onClick={() => setIsMenuOpen(false)} className="block hover:text-black">New Arrival</Link>
+                  <Link to="/shop?cat=T-Shirt" onClick={() => setIsMenuOpen(false)} className="block hover:text-black">T-Shirts</Link>
+                  <Link to="/shop?cat=Pants" onClick={() => setIsMenuOpen(false)} className="block hover:text-black">Pants</Link>
+                  <Link to="/shop?cat=Outwear" onClick={() => setIsMenuOpen(false)} className="block hover:text-black">Outwear</Link>
+                  <Link to="/shop?cat=Accessories" onClick={() => setIsMenuOpen(false)} className="block hover:text-black">Accessories</Link>
+                </div>
+              </div>
+              <Link to="/lookbook" onClick={() => setIsMenuOpen(false)} className="block">Lookbooks</Link>
+              
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="block text-red-500">Admin Panel</Link>
+                  )}
+                  <button 
+                    onClick={() => {
+                      signOut(auth);
+                      setIsMenuOpen(false);
+                    }}
+                    className="block text-left w-full text-2xl font-bold uppercase tracking-widest"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => {
+                    signInWithGoogle();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block text-left w-full text-2xl font-bold uppercase tracking-widest"
+                >
+                  Login
+                </button>
+              )}
             </div>
 
             <div className="pt-8 border-t border-gray-100 flex gap-6 grayscale opacity-60">

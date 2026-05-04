@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { PRODUCTS } from '../constants';
 import { ProductCard } from '../components/ProductCard';
+import { useSettings } from '../context/SettingsContext';
 
 export const Home = () => {
   const featuredProducts = PRODUCTS.slice(0, 4);
+  const { settings } = useSettings();
 
   return (
     <div className="flex flex-col">
@@ -14,8 +16,8 @@ export const Home = () => {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <img 
-            src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2000&auto=format&fit=crop" 
-            alt="Hero Banner" 
+            src={settings.storeImage || "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2000&auto=format&fit=crop"} 
+            alt={settings.storeTitle} 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-black/40" />
@@ -34,7 +36,7 @@ export const Home = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-display text-5xl md:text-8xl font-bold tracking-[0.1em] uppercase mb-12"
+            className="font-display text-4xl md:text-8xl font-bold tracking-[0.1em] uppercase mb-12"
           >
             SNSB X BLEACH
           </motion.h1>
@@ -52,7 +54,7 @@ export const Home = () => {
           </motion.div>
         </div>
 
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-12 text-white/50 text-[10px] font-bold tracking-[0.4em] uppercase">
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-wrap justify-center w-full px-4 gap-4 md:gap-12 text-white/50 text-[10px] font-bold tracking-[0.4em] uppercase">
           <span>01 / BLEACH</span>
           <span>02 / RAYA 26</span>
           <span>03 / CAPSULE</span>
@@ -80,7 +82,7 @@ export const Home = () => {
 
       {/* Editorial Split */}
       <section className="grid grid-cols-1 md:grid-cols-2">
-        <div className="relative aspect-square md:aspect-auto h-[600px] overflow-hidden group">
+        <div className="relative h-[400px] md:h-[600px] overflow-hidden group">
           <img 
             src="https://images.unsplash.com/photo-1543087903-1ac2ec7aa8c5?q=80&w=1200&auto=format&fit=crop" 
             alt="Editorial" 
@@ -95,7 +97,7 @@ export const Home = () => {
             </div>
           </div>
         </div>
-        <div className="relative aspect-square md:aspect-auto h-[600px] overflow-hidden group bg-gray-50 flex items-center justify-center p-12 lg:p-32">
+        <div className="relative h-[400px] md:h-[600px] overflow-hidden group bg-gray-50 flex items-center justify-center p-8 lg:p-32">
           <div className="space-y-8 text-center">
             <span className="font-display text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400">Newsletter</span>
             <h3 className="font-display text-4xl font-bold uppercase tracking-widest leading-tight">Be part of the SNSB world</h3>

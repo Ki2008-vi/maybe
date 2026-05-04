@@ -5,11 +5,11 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const Lookbook = () => {
   return (
-    <div className="pt-24 min-h-screen bg-black text-white">
+    <div className="pt-24 min-h-screen bg-black text-white overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 py-20">
         <div className="mb-24 space-y-6 text-center max-w-2xl mx-auto">
           <span className="font-display text-[10px] font-bold tracking-[0.6em] uppercase text-gray-500">Editorial Archive</span>
-          <h1 className="font-display text-5xl md:text-7xl font-bold uppercase tracking-[0.1em]">Lookbooks</h1>
+          <h1 className="font-display text-4xl md:text-7xl font-bold uppercase tracking-[0.1em]">Lookbooks</h1>
           <p className="text-gray-400 text-sm uppercase tracking-[0.2em] leading-relaxed">
             A visual documentation of the SNSB WORLD universe through styled photography and artistic direction.
           </p>
@@ -20,9 +20,9 @@ export const Lookbook = () => {
             <section key={lb.id} className="relative">
               <div className="flex flex-col lg:flex-row gap-12 items-center mb-16 px-4">
                 <div className="lg:w-1/3 space-y-6">
-                  <span className="font-display text-8xl font-bold text-white/5 absolute -top-20 -left-10 select-none">{lb.year}</span>
+                  <span className="font-display text-6xl md:text-8xl font-bold text-white/5 absolute -top-10 md:-top-20 left-0 md:-left-10 select-none">{lb.year}</span>
                   <div className="relative">
-                    <h2 className="font-display text-4xl font-bold uppercase tracking-widest leading-tight">{lb.title}</h2>
+                    <h2 className="font-display text-3xl md:text-4xl font-bold uppercase tracking-widest leading-tight">{lb.title}</h2>
                     <p className="text-gray-500 text-xs font-bold uppercase tracking-[0.4em] mt-2">{lb.year} Collection</p>
                   </div>
                   <p className="text-gray-400 text-sm uppercase tracking-[0.15em] leading-loose">
