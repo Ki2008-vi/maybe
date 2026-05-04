@@ -9,9 +9,16 @@ interface Order {
   id: string;
   userId: string;
   customerEmail: string;
-  customerName: string;
   total: number;
+  taxAmount?: number;
+  shippingFee?: number;
+  subTotal?: number;
   paymentMethod: string;
+  recipientName?: string;
+  phone?: string;
+  streetAddress?: string;
+  city?: string;
+  postalCode?: string;
   createdAt: string;
   items: Array<{ name: string; quantity: number; price: number }>;
 }
@@ -411,15 +418,23 @@ export const AdminDashboard = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                          <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400 mb-3">Customer</h4>
-                          <p className="text-xs font-bold uppercase tracking-widest">{order.customerName}</p>
-                          <p className="text-[10px] text-gray-500 tracking-widest uppercase truncate">{order.customerEmail}</p>
+                          <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400 mb-3">Shipping To</h4>
+                          <p className="text-xs font-bold uppercase tracking-widest">{order.recipientName || 'No Name'}</p>
+                          <p className="text-[10px] text-gray-500 tracking-widest uppercase mt-1">
+                            {order.streetAddress}, {order.city}, {order.postalCode}
+                          </p>
+                          <p className="text-[10px] text-gray-500 tracking-widest uppercase mt-1">{order.phone}</p>
                         </div>
                         <div>
-                          <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400 mb-3">Total Paid</h4>
-                          <span className="text-xl font-display font-bold">Rp {(order.total || 0).toLocaleString('id-ID')}</span>
+                          <h4 className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400 mb-3">Financials</h4>
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center pt-2 mt-2 border-t border-gray-100">
+                              <span className="text-xs font-bold uppercase tracking-widest">Total Paid</span>
+                              <span className="text-lg font-display font-bold">Rp {(order.total || 0).toLocaleString('id-ID')}</span>
+                            </div>
+                          </div>
                           {order.paymentMethod && (
-                            <div className="mt-1 flex items-center gap-2">
+                            <div className="mt-3 flex items-center gap-2">
                                <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                                <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">{order.paymentMethod}</span>
                             </div>

@@ -208,7 +208,20 @@ app.post('/api/products/bulk-delete', async (req, res) => {
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
 app.get('/api/orders', async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT *, total_price as total, payment_method as paymentMethod, created_at as createdAt FROM orders ORDER BY created_at DESC');
+    const [rows] = await pool.execute(`
+      SELECT *, 
+             total_price as total, 
+             tax_amount as taxAmount,
+             shipping_fee as shippingFee,
+             subtotal as subTotal,
+             payment_method as paymentMethod,
+             recipient_name as recipientName,
+             street_address as streetAddress,
+             postal_code as postalCode,
+             created_at as createdAt 
+      FROM orders 
+      ORDER BY created_at DESC
+    `);
     const ordersWithItems = await Promise.all(rows.map(async (order) => {
       // Join with products to get the name
       const [items] = await pool.execute(`
@@ -227,13 +240,22 @@ app.get('/api/orders', async (req, res) => {
 });
 
 app.post('/api/orders', async (req, res) => {
-  const { id, userId, customerName, customerEmail, total, items } = req.body;
+  const { id, userId, customerEmail, financials, shippingDetails, paymentMethod, items } = req.body;
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
     await connection.execute(
-      'INSERT INTO orders (id, user_id, customer_name, customer_email, total_price, payment_method) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, userId, customerName, customerEmail, total, req.body.paymentMethod]
+      `INSERT INTO orders (
+        id, user_id, customer_email, 
+        total_price, tax_amount, shipping_fee, subtotal, 
+        payment_method, recipient_name, phone, street_address, city, postal_code
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, userId, customerEmail,
+        financials.grandTotal, financials.tax, financials.shippingFee, financials.subTotal,
+        paymentMethod, 
+        shippingDetails.recipientName, shippingDetails.phone, shippingDetails.streetAddress, shippingDetails.city, shippingDetails.postalCode
+      ]
     );
     for (const item of items) {
       await connection.execute(
